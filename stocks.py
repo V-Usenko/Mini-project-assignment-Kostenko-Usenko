@@ -21,6 +21,18 @@ plt.legend()
 plt.grid()
 plt.show()
 
+
+def add_trading_signals(data):
+    data = data.copy()
+    data["Signal"] = "Hold"
+    previous_short_ma = data["50-Day-MA"].shift(1)
+    previous_long_ma = data["200-Day-MA"].shift(1)
+    buy_condition = ((data["50-Day-MA"] > data["200-Day-MA"])&(previous_short_ma <= previous_long_ma))
+    sell_condition = ((data["50-Day-MA"] < data["200-Day-MA"])&(previous_short_ma >= previous_long_ma))
+    data.loc[buy_condition, "Signal"] = "Buy"
+    data.loc[sell_condition, "Signal"] = "Sell"
+
+    return data
 def calculate_pnl(data):
     data = data.copy()
     data["Trade_PnL"] = 0.0
