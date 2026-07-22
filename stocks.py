@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 
 ticker = "XOM"
 xom = yf.download(tickers = ticker, start = "2023-01-01", end = "2026-07-01", interval = "1d")
+xom.columns = xom.columns.get_level_values(0)
 print(xom)
 
 xom["50-Day-MA"] = xom["Close"].rolling(window=50).mean()
