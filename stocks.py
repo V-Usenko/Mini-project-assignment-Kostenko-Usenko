@@ -21,4 +21,40 @@ plt.legend()
 plt.grid()
 plt.show()
 
+def calculate_pnl(data):
+    data = data.copy()
+    data["Trade_PnL"] = 0.0
+    buy_price = None
+    total_pnl = 0.0
 
+    for date, row in data.iterrows():
+        current_price = float(row["Close"])
+        current_signal = row["Signal"]
+
+        if current_signal == "Buy" and buy_price is None:
+            buy_price = current_price
+            print(f"Купівля, дата: {date.date()}, ціна: ${buy_price:.2f}")
+
+        elif current_signal == "Sell" and buy_price is not None:
+            trade_pnl = current_price - buy_price
+            data.at[date, "Trade_PnL"] = trade_pnl
+            total_pnl += trade_pnl
+            print(f"Продаж, дата: {date.date()}, ціна: ${current_price:.2f}, P&L: ${trade_pnl:.2f}")
+            buy_price = None
+
+    if buy_price is not None:
+        last_price = float(data["Close"].iloc[-1])
+        open_position_pnl = last_price - buy_price
+        total_pnl += open_position_pnl
+        print(f"Відкрита позиція, остання ціна: ${last_price:.2f}, P&L: ${open_position_pnl:.2f}")
+
+    return data, total_pnl
+
+
+clean_xom_close = add_trading_signals(clean_xom_close)
+clean_xom_close, total_pnl = calculate_pnl(clean_xom_close)
+trades = clean_xom_close[clean_xom_close["Signal"] != "Hold"]
+
+print("Торгові сигнали:")
+print(trades[["Close", "50-Day-MA", "200-Day-MA", "Signal", "Trade_PnL"]])
+print(f"Загальний P&L: ${total_pnl:.2f}")
