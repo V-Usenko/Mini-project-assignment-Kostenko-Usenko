@@ -4,12 +4,14 @@ import matplotlib.pyplot as plt
 ticker = "XOM"
 xom = yf.download(tickers = ticker, start = "2023-01-01", end = "2026-07-01", interval = "1d")
 xom.columns = xom.columns.get_level_values(0)
+print("Історичні дані ExxonMobil:")
 print(xom)
 
 xom["50-Day-MA"] = xom["Close"].rolling(window=50).mean()
 xom["200-Day-MA"] = xom["Close"].rolling(window=200).mean()
 
 clean_xom_close = xom[["Close", "50-Day-MA", "200-Day-MA"]].dropna()
+print("Ціна при закритті та ковзні середні за 50 і 200 днів:")
 print(clean_xom_close)
 
 plt.figure(figsize = (13,7))
@@ -34,6 +36,7 @@ def add_trading_signals(data):
     data.loc[sell_condition, "Signal"] = "Sell"
 
     return data
+
 def calculate_pnl(data):
     data = data.copy()
     data["Trade_PnL"] = 0.0
@@ -71,3 +74,32 @@ trades = clean_xom_close[clean_xom_close["Signal"] != "Hold"]
 print("Торгові сигнали:")
 print(trades[["Close", "50-Day-MA", "200-Day-MA", "Signal", "Trade_PnL"]])
 print(f"Загальний P&L: ${total_pnl:.2f}")
+
+buy = clean_xom_close[clean_xom_close["Signal"] == "Buy"]
+sell = clean_xom_close[clean_xom_close["Signal"] == "Sell"]
+
+plt.figure(figsize = (15,8))
+plt.plot(clean_xom_close["50-Day-MA"], label = "50-Day Moving Average", color = "blue")
+plt.plot(clean_xom_close["200-Day-MA"], label = "200-Day Moving Average", color = "green")
+plt.plot(clean_xom_close["Close"], label = "Close price", color = "darkgrey")
+plt.scatter(buy.index, buy["50-Day-MA"], label = "Buy", color = "green", marker = "^", s = 100)
+plt.scatter(sell.index, sell["50-Day-MA"], label = "Sell", color = "red", marker = "v", s = 100)
+plt.title("ExxonMobil(XOM) 50 and 200 Day Moving Average")
+plt.xlabel("Date")
+plt.ylabel("Price, $")
+plt.legend()
+plt.grid()
+plt.show()
+
+investment = 100000
+
+buy_price = clean_xom_close[clean_xom_close["Signal"] == "Buy"]["Close"].iloc[0]
+number_of_shares = investment / buy_price
+number_of_shares = round(number_of_shares, 2)
+
+total_profit = number_of_shares * total_pnl
+final_suma = investment + total_profit
+roi = (total_profit / investment) * 100
+date = clean_xom_close[clean_xom_close["Signal"] == "Buy"].index[0]
+print(f"Інвестувавши {investment}$ {date}, отримали б {number_of_shares} акцій, дохід {total_profit:.2f}$, загальний дохід {final_suma:.2f}$ та roi {roi:.2f}%")
+
